@@ -13,6 +13,13 @@ provider:
   runtime: nodejs10.x
   region: sa-east-1
   stackName: tweakImageUploader
+  logs:
+    restApi: true
+  apiGateway:
+    binaryMediaTypes:
+      - 'image/jpg'
+      - 'image/jpeg'
+      - 'image/png'
   iamRoleStatements:
     - Effect: "Allow"
       Action: 
@@ -42,7 +49,7 @@ functions:
       Bucket: tweak-challenge-images
   
   GetImage:
-    handler: endpoints/images/get.handler
+    handler: endpoints/images/getImage.handler
     events:
       - http:
           path: images/{filename}
