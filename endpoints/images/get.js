@@ -4,24 +4,23 @@ const s3 = new AWS.S3()
 
 exports.handler = async (event, context) => {
   console.log('Event', event)
-  const { body } = event
-  const { filename, image } = JSON.parse(body)
-  const decodedImage = Buffer.from(image, 'base64')
+  const { pathParameters: { filename } } = event
 
-  const result = await s3.upload({
-    Body: decodedImage,
+  const result = await s3.getObject({
     Bucket: process.env.Bucket,
-    Key: filename,
-    ContentType: 'image/jpg'
+    Key: filename
   }).promise()
 
   console.log('Result', result)
 
   const response = {
-    statusCode: 204,
+    statusCode: 200,
     headers: {
       'Access-Control-Allow-Origin': '*' // Required for CORS support to work
-    }
+    },
+    body: JSON.stringify({
+      image: result.Body.toString('base64')
+    })
   }
 
   console.log('Response', response)

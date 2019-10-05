@@ -23,6 +23,7 @@ provider:
         - "arn:aws:logs:*:*:*"
     - Effect: "Allow"
       Action:
+        - "s3:GetObject"
         - "s3:PutObject" 
       Resource: 
         - "arn:aws:s3:::tweak-challenge-images/*"
@@ -37,13 +38,20 @@ functions:
           path: images
           method: post
           cors: true
-          integration: lambda
+    environment:
+      Bucket: tweak-challenge-images
+  
+  GetImage:
+    handler: endpoints/images/get.handler
+    events:
+      - http:
+          path: images/{filename}
+          method: get
+          cors: true
           request:
-            passThrough: WHEN_NO_TEMPLATES
-            template:
-              image/jpg: '{ "content": "$input.body" }'
-              image/jpeg: '{ "content": "$input.body" }'
-              image/png: '{ "content": "$input.body" }'
+            parameters:
+              paths:
+                filename: true
     environment:
       Bucket: tweak-challenge-images
 
