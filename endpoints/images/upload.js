@@ -6,14 +6,14 @@ exports.handler = async (event, context) => {
   console.log('Event', event)
   try {
     const { body } = event
-    const { filename, image } = JSON.parse(body)
+    const { filename, contentType, image } = JSON.parse(body)
     const decodedImage = Buffer.from(image, 'base64')
 
     const result = await s3.upload({
       Body: decodedImage,
       Bucket: process.env.Bucket,
       Key: filename,
-      ContentType: 'image/jpg'
+      ContentType: contentType
     }).promise()
 
     console.log('Result', result)

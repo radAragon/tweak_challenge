@@ -7,23 +7,19 @@ exports.handler = async (event, context) => {
   try {
     const { pathParameters: { filename } } = event
 
-    const result = await s3.getObject({
+    const imageUrl = await s3.getSignedUrlPromise('getObject', {
       Bucket: process.env.Bucket,
-      Key: filename
-    }).promise()
+      Key: filename,
+      Expires: 60
+    })
 
-    console.log('Result', result)
+    console.log('Result', imageUrl)
 
     const response = {
-      statusCode: 200,
+      statusCode: 301,
       headers: {
-        'Access-Control-Allow-Origin': '*' // Required for CORS support to work
-      },
-      body: JSON.stringify({
-        filename,
-        contentType: result.ContentType,
-        image: result.Body.toString('base64')
-      })
+        Location: imageUrl
+      }
     }
 
     console.log('Response', response)
