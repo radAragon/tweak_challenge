@@ -55,6 +55,19 @@ functions:
         Ref: CognitoUserPoolClient
       PoolId: 
         Ref: CognitoUserPool
+
+  Login:
+    handler: endpoints/users/login.handler
+    events:
+      - http:
+          path: users/login
+          method: post
+          cors: true
+    environment:
+      ClientId:
+        Ref: CognitoUserPoolClient
+      PoolId: 
+        Ref: CognitoUserPool
     
   PostImage:
     handler: endpoints/images/upload.handler
@@ -62,7 +75,16 @@ functions:
       - http:
           path: images
           method: post
-          cors: true
+          cors:
+            origin: '*'
+            headers:
+              - Content-Type
+              - X-Amz-Date
+              - Authorization
+              - X-Api-Key
+              - X-Amz-Security-Token
+              - X-Amz-User-Agent
+            allowCredentials: true
           authorizer:
             type: COGNITO_USER_POOLS
             authorizerId:
@@ -76,7 +98,16 @@ functions:
       - http:
           path: images/{filename}
           method: get
-          cors: true
+          cors:
+            origin: '*'
+            headers:
+              - Content-Type
+              - X-Amz-Date
+              - Authorization
+              - X-Api-Key
+              - X-Amz-Security-Token
+              - X-Amz-User-Agent
+            allowCredentials: true
           authorizer:
             type: COGNITO_USER_POOLS
             authorizerId:
@@ -98,18 +129,20 @@ resources:
     CognitoUserPool:
       Type: "AWS::Cognito::UserPool"
       Properties:
-        # Generate a name based on the stage
         UserPoolName: tweak-challenge-user-pool
-        # Set email as an alias
         # UsernameAttributes:
         #   - email
-        # AutoVerifiedAttributes:
-        #   - email
+        Policies:
+          PasswordPolicy:
+            MinimumLength: 6
+            RequireLowercase: False
+            RequireNumbers: True
+            RequireSymbols: False
+            RequireUppercase: False
 
     CognitoUserPoolClient:
       Type: "AWS::Cognito::UserPoolClient"
       Properties:
-        # Generate an app client name based on the stage
         ClientName: tweak-challenge-user-pool-client
         UserPoolId:
           Ref: CognitoUserPool
@@ -129,12 +162,3 @@ resources:
         Type: COGNITO_USER_POOLS
         ProviderARNs:
           - Fn::GetAtt: [CognitoUserPool, Arn]
-
-  Outputs:
-    UserPoolId:
-      Value:
-        Ref: CognitoUserPool
-
-    UserPoolClientId:
-      Value:
-        Ref: CognitoUserPoolClient

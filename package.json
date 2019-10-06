@@ -13,7 +13,9 @@
   "author": "rad.aragon@gmail.com",
   "license": "ISC",
   "dependencies": {
+    "amazon-cognito-identity-js": "^3.0.15",
     "aws-sdk": "^2.543.0",
+    "node-fetch": "^2.6.0",
     "serverless": "^1.53.0"
   },
   "devDependencies": {
