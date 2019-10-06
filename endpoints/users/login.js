@@ -1,5 +1,6 @@
 'use strict'
 global.fetch = require('node-fetch')
+const AWS = require('aws-sdk')
 const AmazonCognitoIdentity = require('amazon-cognito-identity-js')
 const { success, failure } = require('../lib/response')
 
@@ -15,7 +16,7 @@ exports.handler = async (event, context) => {
     })
 
     const userPool = new AmazonCognitoIdentity.CognitoUserPool({
-      UserPoolId: process.env.PoolId,
+      UserPoolId: process.env.UserPoolId,
       ClientId: process.env.ClientId
     })
 
@@ -30,9 +31,20 @@ exports.handler = async (event, context) => {
         onFailure: reject
       })
     })
-    console.log('Result', result)
+    console.log('Authenticate result', result)
 
     const accessToken = result.getIdToken().getJwtToken()
+
+    const credentials = new AWS.CognitoIdentityCredentials({
+      IdentityPoolId: process.env.IdentityPoolId,
+      Logins: {
+        [`cognito-idp.${process.env.AWS_REGION}.amazonaws.com/${process.env.UserPoolId}`]: accessToken
+      }
+    })
+
+    const refreshResult = await new Promise((resolve, reject) =>
+      credentials.refresh(err => err ? reject(err) : resolve()))
+    console.log('Refresh result', refreshResult)
 
     return success({
       accessToken
