@@ -5,15 +5,19 @@ const s3 = new AWS.S3()
 
 exports.handler = async (event, context) => {
   console.log('Event', event)
+  console.log('Authorizer', event.requestContext.authorizer)
+
   try {
-    const { body } = event
+    const { body, requestContext: { authorizer: { claims } } } = event
     const { filename, contentType, image } = JSON.parse(body)
     const decodedImage = Buffer.from(image, 'base64')
+    const username = claims['cognito:username']
+    const Key = `${username}/${filename}`
 
     const result = await s3.upload({
       Body: decodedImage,
       Bucket: process.env.Bucket,
-      Key: filename,
+      Key,
       ContentType: contentType
     }).promise()
 

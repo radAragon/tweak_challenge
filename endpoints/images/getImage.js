@@ -5,12 +5,19 @@ const s3 = new AWS.S3()
 
 exports.handler = async (event, context) => {
   console.log('Event', event)
+  console.log('Authorizer', event.requestContext.authorizer)
+
   try {
-    const { pathParameters: { filename } } = event
+    const {
+      pathParameters: { filename },
+      requestContext: { authorizer: { claims } }
+    } = event
+    const username = claims['cognito:username']
+    const Key = `${username}/${filename}`
 
     const imageUrl = await s3.getSignedUrlPromise('getObject', {
       Bucket: process.env.Bucket,
-      Key: filename,
+      Key,
       Expires: 60
     })
 
