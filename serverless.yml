@@ -11,7 +11,7 @@ service: tweak-challenge
 provider:
   name: aws
   runtime: nodejs10.x
-  region: sa-east-1
+  region: us-east-1
   stackName: tweakImageUploader
   logs:
     restApi: true
@@ -34,17 +34,39 @@ provider:
         - "s3:PutObject" 
       Resource: 
         - "arn:aws:s3:::tweak-challenge-images/*"
+    - Effect: "Allow"
+      Action:
+        - "cognito-idp:AdminConfirmSignup"
+      Resource:
+        - "arn:aws:cognito-idp:*:*:*"
 
 # The `functions` block defines what code to deploy
 functions:
+  CreateUser:
+    handler: endpoints/users/create.handler
+    # The `events` block defines how to trigger the handler.helloWorld code
+    events:
+      - http:
+          path: users
+          method: post
+          cors: true
+    environment:
+      ClientId:
+        Ref: CognitoUserPoolClient
+      PoolId: 
+        Ref: CognitoUserPool
+    
   PostImage:
     handler: endpoints/images/upload.handler
-    # The `events` block defines how to trigger the handler.helloWorld code
     events:
       - http:
           path: images
           method: post
           cors: true
+          authorizer:
+            type: COGNITO_USER_POOLS
+            authorizerId:
+              Ref: ApiGatewayAuthorizer
     environment:
       Bucket: tweak-challenge-images
   
@@ -55,6 +77,10 @@ functions:
           path: images/{filename}
           method: get
           cors: true
+          authorizer:
+            type: COGNITO_USER_POOLS
+            authorizerId:
+              Ref: ApiGatewayAuthorizer
           request:
             parameters:
               paths:
@@ -68,3 +94,47 @@ resources:
       Type: "AWS::S3::Bucket"
       Properties:
         BucketName: tweak-challenge-images
+    
+    CognitoUserPool:
+      Type: "AWS::Cognito::UserPool"
+      Properties:
+        # Generate a name based on the stage
+        UserPoolName: tweak-challenge-user-pool
+        # Set email as an alias
+        # UsernameAttributes:
+        #   - email
+        # AutoVerifiedAttributes:
+        #   - email
+
+    CognitoUserPoolClient:
+      Type: "AWS::Cognito::UserPoolClient"
+      Properties:
+        # Generate an app client name based on the stage
+        ClientName: tweak-challenge-user-pool-client
+        UserPoolId:
+          Ref: CognitoUserPool
+        ExplicitAuthFlows:
+          - ADMIN_NO_SRP_AUTH
+        GenerateSecret: false
+    
+    ApiGatewayAuthorizer:
+      DependsOn:
+        - ApiGatewayRestApi
+      Type: AWS::ApiGateway::Authorizer
+      Properties:
+        Name: cognito-authorizer
+        IdentitySource: method.request.header.Authorization
+        RestApiId:
+          Ref: ApiGatewayRestApi
+        Type: COGNITO_USER_POOLS
+        ProviderARNs:
+          - Fn::GetAtt: [CognitoUserPool, Arn]
+
+  Outputs:
+    UserPoolId:
+      Value:
+        Ref: CognitoUserPool
+
+    UserPoolClientId:
+      Value:
+        Ref: CognitoUserPoolClient

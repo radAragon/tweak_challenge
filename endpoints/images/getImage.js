@@ -1,5 +1,6 @@
 'use strict'
 const AWS = require('aws-sdk')
+const { success, failure } = require('../lib/response')
 const s3 = new AWS.S3()
 
 exports.handler = async (event, context) => {
@@ -15,24 +16,8 @@ exports.handler = async (event, context) => {
 
     console.log('Result', imageUrl)
 
-    const response = {
-      statusCode: 301,
-      headers: {
-        Location: imageUrl
-      }
-    }
-
-    console.log('Response', response)
-    return response
+    return success(undefined, 301, { Location: imageUrl })
   } catch (error) {
-    return {
-      statusCode: 500,
-      headers: {
-        'Access-Control-Allow-Origin': '*' // Required for CORS support to work
-      },
-      body: JSON.stringify({
-        error: error.message
-      })
-    }
+    return failure(error)
   }
 }
