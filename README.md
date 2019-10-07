@@ -12,7 +12,7 @@ The Image Uploader module is a full AWS Serverless API featuring User sign up an
 
 ### Requirements:
 
-- Node
+- Node.js 10
 - AWS account configured with admin privileges (CloudFormation) in the execution environment
 
 ### Execution:
@@ -80,7 +80,8 @@ The Image Uploader module is a full AWS Serverless API featuring User sign up an
         ```
         {
             "filename": "string",
-            "contentType": "image/jpg" | "image/png"
+            "contentType": "image/jpg" | "image/png",
+            "image": "Base64 string"
         }
         ```
 
