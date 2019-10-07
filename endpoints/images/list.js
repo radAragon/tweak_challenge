@@ -1,11 +1,11 @@
 'use strict'
 const AWS = require('aws-sdk')
 const { success, failure } = require('../lib/response')
-const s3 = new AWS.S3()
 
 exports.handler = async (event, context) => {
   console.log('Event', event)
   console.log('Authorizer', event.requestContext.authorizer)
+  const s3 = new AWS.S3()
 
   try {
     const {

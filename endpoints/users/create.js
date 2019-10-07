@@ -1,10 +1,11 @@
 'use strict'
 const AWS = require('aws-sdk')
 const { success, failure } = require('../lib/response')
-const cognitoISP = new AWS.CognitoIdentityServiceProvider()
 
 exports.handler = async (event, context) => {
   console.log('Event', event)
+  const cognitoISP = new AWS.CognitoIdentityServiceProvider()
+
   try {
     const { body } = event
     const { email, password } = JSON.parse(body)
