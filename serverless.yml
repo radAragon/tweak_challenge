@@ -30,10 +30,12 @@ provider:
         - "arn:aws:logs:*:*:*"
     - Effect: "Allow"
       Action:
+        - "s3:List*"
         - "s3:GetObject"
         - "s3:PutObject" 
-      Resource: 
-        - "arn:aws:s3:::tweak-challenge-images/*"
+      Resource:
+        - Fn::GetAtt: [StorageBucket, Arn]
+        - Fn::Join: ['/', [Fn::GetAtt: [StorageBucket, Arn], '*']]
     - Effect: "Allow"
       Action:
         - "cognito-idp:AdminConfirmSignup"
@@ -75,22 +77,14 @@ functions:
       - http:
           path: images
           method: post
-          cors:
-            origin: '*'
-            headers:
-              - Content-Type
-              - X-Amz-Date
-              - Authorization
-              - X-Api-Key
-              - X-Amz-Security-Token
-              - X-Amz-User-Agent
-            allowCredentials: true
+          cors: true
           authorizer:
             type: COGNITO_USER_POOLS
             authorizerId:
               Ref: ApiGatewayAuthorizer
     environment:
-      Bucket: tweak-challenge-images
+      Bucket:
+        Ref: StorageBucket
   
   GetImage:
     handler: endpoints/images/getImage.handler
@@ -98,16 +92,7 @@ functions:
       - http:
           path: images/{filename}
           method: get
-          cors:
-            origin: '*'
-            headers:
-              - Content-Type
-              - X-Amz-Date
-              - Authorization
-              - X-Api-Key
-              - X-Amz-Security-Token
-              - X-Amz-User-Agent
-            allowCredentials: true
+          cors: true
           authorizer:
             type: COGNITO_USER_POOLS
             authorizerId:
@@ -117,14 +102,28 @@ functions:
               paths:
                 filename: true
     environment:
-      Bucket: tweak-challenge-images
+      Bucket:
+        Ref: StorageBucket
+  
+  ListImages:
+    handler: endpoints/images/list.handler
+    events:
+      - http:
+          path: images
+          method: get
+          cors: true
+          authorizer:
+            type: COGNITO_USER_POOLS
+            authorizerId:
+              Ref: ApiGatewayAuthorizer
+    environment:
+      Bucket:
+        Ref: StorageBucket
 
 resources:
   Resources:
     StorageBucket:
       Type: "AWS::S3::Bucket"
-      Properties:
-        BucketName: tweak-challenge-images
     
     CognitoUserPool:
       Type: "AWS::Cognito::UserPool"
